@@ -78,7 +78,7 @@ check_env() {
 }
 
 checkout_latest_tag() {
-  tag=$(git describe --tags "$(git rev-list --tags --max-count=1)")
+  tag=$(git describe --always --tags "$(git rev-list --tags --max-count=1)")
   git reset --hard "$tag"
 }
 
