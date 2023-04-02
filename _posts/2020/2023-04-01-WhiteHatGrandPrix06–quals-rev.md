@@ -131,7 +131,7 @@ int __cdecl flag(unsigned __int64 n) {
   Str2 = WORD1(n) - 0x5100;
   endOfStr = '\0';
   result = strcmp(Str1, "Flag");
-  if (!result) {
+  if (!result) { 
     Buffer = (void * ) operator new [](0x186A0 u);
     Stream = fopen("data", "rb");
     data = fread(Buffer, 1 u, 0x186A0 u, Stream);
