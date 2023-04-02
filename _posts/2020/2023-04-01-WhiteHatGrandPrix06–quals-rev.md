@@ -111,7 +111,8 @@ arr = {ptr[0][10], ptr[1][10], ... ptr[14][10]}
 
 #### `flag` 함수
 
-```c
+{% raw %}
+```c++
 int __cdecl flag(unsigned __int64 n) {
   int result; // eax
   __int64 FLAG; // rax
@@ -142,10 +143,12 @@ int __cdecl flag(unsigned __int64 n) {
   return result;
 }
 ```
+{% endraw %}
 
 `flag` 함수는 다음과 같이 동작한다.
 
-```c
+{% raw %}
+```c++
 char *n = ...
 n[0] -= 0x7D;
 n[1] += 0x7C;
@@ -158,12 +161,14 @@ if (!result) {
 }
 return result;
 ```
+{% endraw %}
 
 `data`를 복구하여 `whitehat.exe`를 실행하면 플래그를 출력할 것으로 보인다.
 
 #### `SHF` 함수
 
-```c
+{% raw %}
+```c++
 __int64 __cdecl SHF(unsigned __int8 * arr, int len) {
   int i; // [esp+14h] [ebp-Ch]
   __int64 res; // [esp+18h] [ebp-8h]
@@ -176,6 +181,7 @@ __int64 __cdecl SHF(unsigned __int8 * arr, int len) {
   return res;
 }
 ```
+{% endraw %}
 
 `SHF`는 simple hash function의 약자인 것 같다.
 
@@ -194,6 +200,7 @@ __int64 __cdecl SHF(unsigned __int8 * arr, int len) {
 
 #### sol.py
 
+{% raw %}
 ```python
 from z3 import *
 
@@ -277,6 +284,7 @@ while True:
 
     s.add(And([arr[i] == res[i] for i in range(14)]) == False)
 ```
+{% endraw %}
 
 ```console
 $python3 sol.py 
