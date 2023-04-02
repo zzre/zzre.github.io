@@ -300,8 +300,3 @@ $python3 sol.py
 found!
 Flag = WhiteHat{8333769562446613979}
 ```
-
-
-
-
-
