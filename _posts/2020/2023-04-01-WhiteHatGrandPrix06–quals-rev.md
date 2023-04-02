@@ -111,7 +111,7 @@ arr = {ptr[0][10], ptr[1][10], ... ptr[14][10]}
 
 #### `flag` 함수
 
-```c++
+```c
 int __cdecl flag(unsigned __int64 n) {
   int result; // eax
   __int64 FLAG; // rax
@@ -145,7 +145,7 @@ int __cdecl flag(unsigned __int64 n) {
 
 `flag` 함수는 다음과 같이 동작한다.
 
-```
+```c
 char *n = ...
 n[0] -= 0x7D;
 n[1] += 0x7C;
@@ -163,7 +163,7 @@ return result;
 
 #### `SHF` 함수
 
-```c++
+```c
 __int64 __cdecl SHF(unsigned __int8 * arr, int len) {
   int i; // [esp+14h] [ebp-Ch]
   __int64 res; // [esp+18h] [ebp-8h]
