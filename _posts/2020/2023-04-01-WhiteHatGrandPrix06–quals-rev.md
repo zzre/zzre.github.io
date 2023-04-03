@@ -334,7 +334,7 @@ __int64 __fastcall vuln(const char * buf) {
 ```
 
 ```console
-$checksec loop
+$ checksec loop
 [*] '/pwd/loop'
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
@@ -353,7 +353,7 @@ Hello AAAAAAAA 0x7fffde161b20 (nil) (nil) 0x6 0x6 0x4000000002 0x7fffde1641f0 0x
 ...
 ```
 
-%12$p 부터 payload가 시작된다
+%12$p 부터 payload가 시작된다.
 
 ```console
 pwndbg> x/20gx 0x7fffffffe540
@@ -370,10 +370,11 @@ pwndbg> x/20gx 0x7fffffffe540
 pwndbg> x/i 0x00007ffff7df10b3
    0x7ffff7df10b3 <__libc_start_main+243>:      mov    edi,eax
 ```
-`__libc_start_main+243`은 %23$p 다
 
+`__libc_start_main+243`은 %23$p 다.
 
 fsb 취약점이 이용되기 전에 `puts`는 한 번도 호출되지 않으므로 `puts_got`에는 code 영역의 주소가 적혀있다.
+
 따라서 `puts_got`의 하위 2바이트만 덮어씌워 `main` 함수가 다시 호출되도록 할 수 있다.
 
 #### exploit.py
