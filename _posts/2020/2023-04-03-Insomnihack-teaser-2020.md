@@ -236,4 +236,4 @@ Congrats! The flag is INS{GG EZ clap PogU 5Head B) Kreygasm <3<3}
 ```
 {% endraw %}
 
-코드 안 보고 어떻게 풀어야할지.. 아직 모르겠다
+코드 안 보고 어떻게 풀어야 할지.. 아직 모르겠다
