@@ -35,6 +35,7 @@ kaboom-161bddc63eadbf39092b495ac888af7dc6fa5106c612bd8a4a62761f98ff4d3c.exe: PE3
 
 #### main_0
 
+{% raw %}
 ```c++
 int __cdecl main_0(int argc, const char **argv, const char **envp)
 {
@@ -52,6 +53,7 @@ int __cdecl main_0(int argc, const char **argv, const char **envp)
   }
 }
 ```
+{% endraw %}
 
 #### ChatGPT
 
@@ -69,6 +71,7 @@ int __cdecl main_0(int argc, const char **argv, const char **envp)
 
 함수 길이가 길어서 ChatGPT한테 못 물어봤다.
 
+{% raw %}
 ```c++
 ...
   switch ( len )
@@ -95,6 +98,7 @@ LABEL_348:
     return chk2; // 같으면 return 0
   }
 ```
+{% endraw %}
 
 일단 이 부분으로 `memcmp`로 추정했다.
 
@@ -112,7 +116,9 @@ https://www.youtube.com/watch?v=oGJr5N2lgsQ 에 접속해봤는데 낚시였다.
 
 그래서 UPX unpack을 하면 UPX2 섹션 뒤의 코드가 날아가버려서 풀이가 불가능한 바이너리가 나오게 되는 것 같다...
 
-```assembly
+{% raw %}
+```python
+'''
 ...
 mov edx, [ebx+0x3c]    # 2. Get the address of kernel32.GetCommandLineA in edx
 add edx, ebx
@@ -187,6 +193,7 @@ originalBinary:
 '''.format(diff_start, diff_len, original_EP+1), vma=new_EP)
 ...
 ```
+{% endraw %}
 
 ```
 push 0x00
@@ -203,6 +210,7 @@ push 0x42
 
 #### sol.py
 
+{% raw %}
 ```python
 esp = [0x63, 0xB4, 0xE1, 0x4C, 0xBA, 0x1B, 0x83, 0xD7, 0xFD, 0x77, 0xE3, 0x33]
 cl = 0x42
@@ -214,7 +222,9 @@ for i in range(len(esp)):
 
 print(ans[::-1])
 ```
+{% endraw %}
 
+{% raw %}
 ```console
 $ python3 sol.py 
 Plz&Thank-Q!
@@ -224,5 +234,6 @@ Plz&Thank-Q!
 > .\kaboom-161bddc63eadbf39092b495ac888af7dc6fa5106c612bd8a4a62761f98ff4d3c.exe defuse "Plz&Thank-Q!"
 Congrats! The flag is INS{GG EZ clap PogU 5Head B) Kreygasm <3<3}
 ```
+{% endraw %}
 
 코드 안 보고 어떻게 풀어야할지.. 아직 모르겠다
