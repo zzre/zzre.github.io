@@ -1,6 +1,6 @@
 ---
 title : "Insomni'hack teaser 2020"
-categories : ["2020", "Insomni\"hack teaser 2020"]
+categories : ["2020", "Insomni'hack teaser 2020"]
 ---
 
 ## Reversing
