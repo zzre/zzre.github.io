@@ -311,7 +311,7 @@ Flag = WhiteHat{8333769562446613979}
 
 ## Pwnable
 
-### Pwn01
+### Pwn01 - 100pts
 
 `loop`이랑 `libc.so.6`이 주어진다.
 
@@ -461,7 +461,7 @@ glibc 버전은 2.27이다.
 
 함수가 매우 많다. 하나씩 분석해보자
 
-#### `main`
+#### main
 
 ```c++
 void __fastcall __noreturn main(int a1, char ** a2, char ** a3) {
@@ -497,7 +497,7 @@ void __fastcall __noreturn main(int a1, char ** a2, char ** a3) {
 }
 ```
 
-#### `register`
+#### register
 
 ```c++
 unsigned __int64 register() {
@@ -536,7 +536,7 @@ unsigned __int64 register() {
 }
 ```
 
-#### `login`
+#### login
 
 ```c++
 unsigned __int64 login()
@@ -626,7 +626,7 @@ int store()
 }
 ```
 
-#### `sell`
+#### sell
 
 ```c++
 int sell() {
@@ -649,7 +649,7 @@ int sell() {
 }
 ```
 
-#### `reward`
+#### reward
 
 ```c++
 unsigned __int64 reward() {
@@ -678,7 +678,7 @@ unsigned __int64 reward() {
 }
 ```
 
-#### `writeBook`
+#### writeBook
 
 ```c++
 int writeBook() {
@@ -712,7 +712,7 @@ int writeBook() {
 }
 ```
 
-#### `readBook`
+#### readBook
 
 ```c++
 int readBook() {
@@ -739,7 +739,7 @@ int readBook() {
 }
 ```
 
-#### `logout`
+#### logout
 
 ```c++
 int logout() {
