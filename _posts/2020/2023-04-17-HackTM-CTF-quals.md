@@ -1388,7 +1388,7 @@ def parse2(opcodes):
 
 #### sol.py
 
-https://ctf.harrisongreen.me/2020/hacktm/mama_bear/ 를 참고했다.
+[https://ctf.harrisongreen.me/2020/hacktm/mama_bear/](https://ctf.harrisongreen.me/2020/hacktm/mama_bear/) 를 참고했다.
 
 ```python
 from z3 import *
@@ -1498,9 +1498,6 @@ HackTM{By3_bYE_G0Ld!l0cKS_~mama}
 
 z3를 안 쓰고 bruteforce를 잘 짜면 1 ~ 2시간 정도 걸리는 것 같다.
 
-### PLOP
-
-`plop`이 주어진다.
 
 
 
