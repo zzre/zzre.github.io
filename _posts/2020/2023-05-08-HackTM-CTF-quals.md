@@ -89,7 +89,7 @@ __int64 start() {
 
 `buf[16:8*16]`에 0x10바이트 랜덤한 값의 각 비트를 저장하고 `sub_40035C` 를 호출한다.
 
-```assembly
+```
 loc_400528:
 mov     ds:byte_600862, 2Eh ; '.'
 mov     rsi, 600780h
@@ -167,7 +167,7 @@ pwndbg> x/6gx 0x600832
 
 디컴파일된 결과는 읽기가 힘들어 어셈블리어로 봤다.
 
-```assembly
+```
 // var_8 = byte ptr - 8
 
 mov     r9, rsi
@@ -406,7 +406,7 @@ else: # 0x4003F3
 
 #### sub_40037E
 
-```assembly
+```
 lodsb
 push    offset sub_400394
 push    offset loc_400478
@@ -1498,6 +1498,269 @@ HackTM{By3_bYE_G0Ld!l0cKS_~mama}
 
 z3를 안 쓰고 bruteforce를 잘 짜면 1 ~ 2시간 정도 걸리는 것 같다.
 
+### PLOP (488pts)
 
+#### Description
 
+```
+Author: trupples
 
+I’ve been playing around with mathy obfuscation, see if you can break this one!
+
+P.S. there are multiple “flags” the binary would say are correct, but only one of them matches the flag format.
+```
+
+`plop`이 주어진다.
+
+```shell
+$ ./plop
+ /--------------------------\ 
+ |                          | 
+ | Welcome to my challenge! | 
+ |                          | 
+ \--------------------------/ 
+
+Lemme check your flag :asdf
+Thank you! We'll get back to you later with the results.
+
+The lab is checking your flag (asdf).....
+The results are in: Meh try again :/
+```
+
+입력을 받고 6초정도 있다가 프로그램이 종료된다.
+
+gdb로 돌려보면 `0x555555400d30`에서 segmentation fault가 뜨면서 터진다.
+
+```
+ ► f 0   0x555555400d30
+   f 1   0x5555554009a3
+   f 2   0x7ffff7fe0f6b _dl_fini+523
+   f 3   0x7ffff7e138a7 __run_exit_handlers+247
+   f 4   0x7ffff7e13a60 on_exit
+   f 5   0x7ffff7df108a __libc_start_main+250
+```
+
+backtrace에서 `_dl_fini`를 확인할 수 있다.
+
+#### .fini_array
+
+```
+.fini_array:0000000000201D50 _fini_array     segment qword public 'DATA' use64
+.fini_array:0000000000201D50                 assume cs:_fini_array
+.fini_array:0000000000201D50                 ;org 201D50h
+.fini_array:0000000000201D50 off_201D50      dq offset sub_B90       ; DATA XREF: init+13↑o
+.fini_array:0000000000201D58                 dq offset sub_980
+.fini_array:0000000000201D60                 dq offset sub_9B0
+.fini_array:0000000000201D60 _fini_array     ends
+```
+
+`main`이 종료된 뒤 `sub_9B0` -> `sub_980` -> `sub_B90` 순서로 호출된다.
+
+#### sub_9B0
+
+```c++
+void __fastcall sub_9B0()
+{
+  __int64 addr; // rdi
+  char *v1; // rsi
+  __int64 i; // rcx
+  struct sigaction sigact; // [rsp+0h] [rbp-A8h] BYREF
+  unsigned __int64 canary; // [rsp+98h] [rbp-10h]
+
+  canary = __readfsqword(0x28u);
+  if ( mmap((void *)0x1337000, 0x1000uLL, 3, 50, 0, 0LL) != (void *)0x1337000 )
+    exit(0);
+  addr = 0x1337000LL;
+  v1 = ipt;
+  for ( i = 25LL; i; --i )                      // memcpy(ipt, 0x1337000, 0x19*4)
+  {
+    *(_DWORD *)addr = *(_DWORD *)v1;
+    v1 += 4;
+    addr += 4LL;
+  }
+  sigact.sa_handler = (__sighandler_t)sub_C40;
+  sigemptyset(&sigact.sa_mask);
+  sigact.sa_flags = 0x40000004;
+  sigaction(SIGSEGV, &sigact, 0LL);
+  if ( __readfsqword(0x28u) != canary )
+    main();
+}
+```
+
+`0x1337000`에 메모리를 할당하고 입력값을 복사한다.
+
+이 함수에서 `SIGSEGV`에 대한 핸들러가 `sub_C40`으로 설정된다.
+
+#### sub_C40
+
+메모리를 할당하고 `sub_1550`를 호출한다.
+
+`sub_1550`에서 `*addr = 0xC390909090909090LL;`를 통해 opcode를 쓴다는 것을 유추할 수 있다.
+
+어떤 opcode가 써지는지 확인하기 위해 `sub_1550`에 breakpoint를 걸고 확인해봤다.
+
+gdb에서 `handle SIGSEGV pass nostop`를 실행하고 `$code+0x1550`에 breakpoint를 설정해 디버깅할 수 있다.
+
+`sub_1550`을 호출할 때마다 인자가 바뀌어서 스크립트를 이용했다.
+
+```python
+from pwn import *
+context.log_level="error"
+
+p = process(["gdb", "plop"])
+
+execute = lambda x: p.sendlineafter("pwndbg>", x, timeout=0.5)
+
+def init():
+    execute("starti")
+    execute("code")
+    execute("handle SIGSEGV nostop pass")
+
+def recv():
+    res = p.recvuntil("pwndbg>", drop=True, timeout=0.5)
+    p.sendline()
+    return res.decode()
+
+def go(cnt):
+    execute("x/30i $rdi")
+    res = recv()
+    print(f"[{cnt}] call rdi")
+    print(res)
+    execute("continue")
+
+    execute("x/10i $rax")
+    res = recv()
+    print(f"[{cnt}] jump rax")
+    print(res)
+
+    if "rax,QWORD PTR ds:0x1337100" in res:
+        raise Exception()
+    else:
+        execute("continue")
+
+    return res
+
+init()
+
+breakpoints = [0x15b2, 0x15bf]
+for bp in breakpoints:
+    execute(f"b*$code+{bp}")
+
+execute("run << a")
+
+try:
+    cnt = 1
+    while True:
+        go(cnt)
+        cnt += 1
+except:
+    p.interactive()
+```
+
+결과를 분석해보면 8라운드 동안 입력값 8바이트와 상수값을 이용해 ror, rol, xor 연산을 해 0이 아니면 `0x1337064`에 1을 저장한다.
+
+`jmp rax`는 마지막 라운드를 제외하고 segmentation fault를 내서 다시 핸들러를 호출하도록 되어있다.
+
+아래 흐름을 보면 `0x1337064`에 저장된 값에 따라 `0x20202c`에 저장되는 값이 달라진다.
+
+```
+► 0x55555540153f    mov    rax, qword ptr [0x1337100] # 마지막 라운드 끝
+   0x555555401547    push   rax
+   0x555555401548    ret    
+    ↓
+   0x555555400be0    cmp    byte ptr [0x1337064], 0
+   0x555555400be8    setne  byte ptr [rip + 0x20143d] # 0x20202c
+   0x555555400bef    jmp    0x555555400bef
+    ↓
+   0x555555400bef    jmp    0x555555400bef # 무한루프
+```
+
+```
+sub_C00 proc near
+; __unwind {
+sub     rsp, 8
+cmp     cs:byte_20202C, 0
+lea     rax, aMehTryAgain ; "Meh try again :/"
+lea     rdx, aYouDidIt  ; "You did it!"
+lea     rsi, aTheResultsAreI ; "\nThe results are in: %s\n"
+mov     edi, 1
+cmovnz  rdx, rax
+xor     eax, eax
+call    ___printf_chk
+movzx   edi, cs:byte_20202C ; status
+call    _exit
+; }
+```
+
+`sub_C40`에서 무한루프를 돌다가 SIGALRM 핸들러가 호출되어 `byte_20202C`값에 따라 다른 출력이 나온다.
+
+#### solution
+
+위에 작성한 python 스크립트 실행 결과를 z3 solver로 풀어주면 플래그를 얻을 수 있다.
+
+#### sol.py
+
+```python
+from z3 import *
+from pwn import *
+from Crypto.Util.number import long_to_bytes
+
+s = Solver()
+
+ans = [BitVec(f'ans{i}', 8*8) for i in range(8)]
+
+for i in range(8):
+    for j in range(8):
+        c = Extract((j+1)*8 - 1, j*8, ans[i])
+        s.add(And(0x20 <= c, c < 0x7f))
+
+# flag format
+s.add(Extract(7, 0, ans[0]) == ord('H'))
+s.add(Extract(15, 8, ans[0]) == ord('a'))
+s.add(Extract(23, 16, ans[0]) == ord('c'))
+s.add(Extract(31, 24, ans[0]) == ord('k'))
+s.add(Extract(39, 32, ans[0]) == ord('T'))
+s.add(Extract(47, 40, ans[0]) == ord('M'))
+s.add(Extract(55, 48, ans[0]) == ord('{'))
+
+# round 1
+tmp = RotateLeft(ans[0], 0xe) ^ 0xdc3126bd558bb7a5
+
+# round 2
+# s.add(tmp == 0)
+s.add(ans[1] == RotateRight(tmp ^ 0x76085304e4b4ccd5, 0x28))
+
+# round 3
+s.add(RotateLeft(ans[2], 0x3e) ^ 0x1cb8213f560270a0 == tmp)
+
+# round 4
+s.add(RotateLeft(ans[3], 2) ^ 0x4ef5a9b4344c0672 == tmp)
+
+# round 5
+s.add(ans[4] == RotateRight(tmp ^ 0xe28a714820758df7, 0x2d))
+
+# round 6
+s.add(RotateLeft(ans[5], 0x27) ^ 0xa0d78b57bae31402 == tmp)
+
+# round 7
+s.add(RotateRight(ans[6] ^ rol(0x4474f2ed7223940, 0x35, 64), 0x35) == tmp)
+
+# round 8
+s.add(ans[7] == RotateRight(tmp ^ 0xb18ceeb56b236b4b, 0x19))
+
+while True:
+    if s.check() != sat:
+        break
+
+    m = s.model()
+    res = [int(m[i].as_long()) for i in ans]
+
+    print(''.join(map(lambda x: x.to_bytes(8, 'little').decode(), res)))
+    check = And([ans[i] == res[i] for i in range(8)])
+    s.add(check == False)
+```
+
+```shell
+$ python3 sol.py
+HackTM{PolynomialLookupOrientedProgramming_sounds_kinda_shit_xd}
+```
