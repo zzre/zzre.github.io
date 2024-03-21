@@ -1,5 +1,5 @@
 ---
-title : "Insomni'hack teaser 2024 - Tromperoeil"
+title : "Insomni'hack teaser 2024 - TrompeLoeil"
 categories : ["2024", "Insomni'hack teaser", "R2R Stomping"]
 ---
 
@@ -7,9 +7,9 @@ categories : ["2024", "Insomni'hack teaser", "R2R Stomping"]
 
 1월에 Insomni'hack Teaser CTF에 참여했다.
 
-대회 때 못 풀었던 Tromperoeil를 upsolve해 보았다.
+대회 때 못 풀었던 TrompeLoeil를 upsolve해 보았다.
 
-### Reversing - Tromperoeil
+### Reversing - TrompeLoeil
 
 ```
 $ file Trompe-Loeil.dll
